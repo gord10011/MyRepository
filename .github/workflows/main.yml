@@ -24,8 +24,8 @@ jobs:
         run: |
           docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} -p ${{ secrets.DOCKER_HUB_PASSWORD }}
           docker build -t spring-cicd . 
-          docker tag spring-cicd {도커 유저네임}/spring-cicd:${GITHUB_SHA::7}
-          docker push {도커 유저네임}/spring-cicd:${GITHUB_SHA::7}
+          docker tag spring-cicd jchyeok/spring-cicd:${GITHUB_SHA::7}
+          docker push jchyeok/spring-cicd:${GITHUB_SHA::7}
 # on: 이벤트를 트리거하는 조건을 지정합니다. 여기서는 push 이벤트가 main 브랜치에 발생할 때 작업이 실행됩니다.
 # jobs: 하나 이상의 작업을 정의합니다.
 # build: 작업의 이름입니다.
