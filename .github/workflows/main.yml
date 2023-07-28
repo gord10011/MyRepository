@@ -26,6 +26,33 @@ jobs:
           docker build -t spring-cicd . 
           docker tag spring-cicd jchyeok/spring-cicd:${GITHUB_SHA::7}
           docker push jchyeok/spring-cicd:${GITHUB_SHA::7}
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-2
+      - name: Start Session Manager session
+        run: aws ssm start-session --target i-0b0603031b87979ac
+      - name: Deploy to Server
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ap-northeast-2
+        run: |
+          aws ssm send-command \
+            --instance-ids i-0b0603031b87979ac \
+            --document-name "AWS-RunShellScript" \
+            --parameters "commands=[
+              'if sudo docker ps -a --format \\'{{.Names}}\\' | grep -q \'^server$\\'; then',
+              '  sudo docker stop server',
+              '  sudo docker rm server',
+              'fi',
+              'sudo docker pull jchyeok/spring-cicd:${GITHUB_SHA::7}',
+              'sudo docker tag jchyeok/spring-cicd:${GITHUB_SHA::7} spring-cicd',
+              'sudo docker run -d --name server -p 8080:8080 spring-cicd'
+            ]" \
+            --output text
 # on: 이벤트를 트리거하는 조건을 지정합니다. 여기서는 push 이벤트가 main 브랜치에 발생할 때 작업이 실행됩니다.
 # jobs: 하나 이상의 작업을 정의합니다.
 # build: 작업의 이름입니다.
@@ -34,3 +61,5 @@ jobs:
 # name: 작업에 대한 이름을 지정합니다.
 # use: Github Actions의 마켓플레이스에 등록된 작업을 실행합니다. Github Actions에서 특정 작업을 일종의 라이브러리처럼 마켓플레이스에 등록해 놓을 수 있습니다.
 # run: 해당 단계가 실행될 때 수행할 명령을 지정합니다.
+  #위 내용은 지속적 통합을 위한 스크립트입니다.
+  #지속적 통합을 위한 스크립트 아래에 작성합니다.
